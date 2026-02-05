@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+/* ========================================
+   THEME - Custom colors pour le projet
+   ======================================== */
+@theme {
+  /* Background colors */
+  --color-bg-primary: #0a0a0f;
+  --color-bg-secondary: #12121a;
+  --color-bg-card: #1a1a2e;
+
+  /* Text colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a0a0b0;
+
+  /* Neon accent colors */
+  --color-neon-cyan: #00f0ff;
+  --color-neon-purple: #a855f7;
+  --color-neon-pink: #f472b6;
+  --color-neon-blue: #3b82f6;
+
+  /* Border */
+  --color-border: #2a2a3e;
+}
+
+/* ========================================
+   BASE - Styles globaux
+   ======================================== */
+@layer base {
+  html {
+    min-height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(ellipse at top left, rgba(0, 240, 255, 0.10) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(168, 85, 247, 0.10) 0%, transparent 50%),
+                var(--color-bg-secondary) !important;
+  }
+
+  :root {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    font-weight: 400;
+    color-scheme: dark;
+    color: var(--color-text-primary);
+    background: transparent;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    min-height: 100vh;
+    background: transparent;
+  }
+
+  a {
+    @apply font-medium text-neon-cyan no-underline transition-all duration-300;
+  }
+
+  a:hover {
+    color: var(--color-neon-pink);
+    text-shadow: 0 0 10px var(--color-neon-pink);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-text-primary font-semibold;
+  }
+
+  h1 {
+    @apply text-4xl;
+    background: linear-gradient(135deg, var(--color-neon-cyan), var(--color-neon-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-neon-purple);
+  }
+}
+
+/* ========================================
+   COMPONENTS - Classes réutilisables
+   ======================================== */
+@layer components {
+  /* Bouton de base */
+  .btn {
+    @apply rounded-lg border border-border px-5 py-2.5 text-base font-medium
+           bg-bg-card text-text-primary cursor-pointer transition-all duration-300;
+  }
+
+  .btn:hover {
+    @apply border-neon-cyan;
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+  }
+
+  .btn-primary {
+    @apply rounded-lg border border-neon-cyan px-5 py-2.5 text-base font-semibold
+           bg-neon-cyan text-bg-primary cursor-pointer transition-all duration-300;
+  }
+
+  .btn-primary:hover {
+    @apply bg-neon-cyan/90;
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+  }
+
+  .btn-danger {
+    @apply rounded-lg border border-red-500/50 px-5 py-2.5 text-base font-medium
+           bg-red-500/20 text-red-400 cursor-pointer transition-all duration-300;
+  }
+
+  .btn-danger:hover {
+    @apply bg-red-500/30 border-red-500;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+  }
+
+  .btn-ghost {
+    @apply rounded-lg border border-transparent px-5 py-2.5 text-base font-medium
+           bg-transparent text-text-primary cursor-pointer transition-all duration-300;
+  }
+
+  .btn-ghost:hover {
+    @apply bg-bg-card border-border;
+  }
+
+  /* Card de base */
+  .card {
+    @apply bg-bg-card rounded-xl border border-border p-6;
+  }
+
+  /* Input de base */
+  .input {
+    @apply w-full px-4 py-3 bg-bg-secondary border border-border rounded-lg
+           text-text-primary text-base transition-all duration-300
+           focus:outline-none focus:border-neon-cyan;
+  }
+
+  .input:focus {
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  }
+
+  /* Avatar Component */
+  .avatar {
+    @apply rounded-full flex items-center justify-center font-semibold text-white shrink-0 object-cover;
+  }
+
+  .avatar-sm {
+    @apply w-8 h-8 text-xs;
+  }
+
+  .avatar-md {
+    @apply w-10 h-10 text-sm;
+  }
+
+  .avatar-lg {
+    @apply w-24 h-24 text-2xl;
+  }
+
+  /* Avatar avec icône */
+  .avatar-icon.avatar-sm svg {
+    font-size: 1.1rem;
+  }
+
+  .avatar-icon.avatar-md svg {
+    font-size: 1.4rem;
+  }
+
+  .avatar-icon.avatar-lg svg {
+    font-size: 3rem;
+  }
+}
