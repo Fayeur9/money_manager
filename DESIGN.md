@@ -136,6 +136,25 @@ La table `budgets` comprend :
 
 Une contrainte `UNIQUE` sur le couple `(user_id, category_id)` garantit qu'un utilisateur ne peut avoir qu'un seul budget par catégorie.
 
+#### Avances (Advances)
+
+La table `advances` comprend :
+
+* `id`, qui spécifie l'identifiant unique de l'avance en tant qu'`CHAR(36)` (UUID). Cette colonne possède donc la contrainte `PRIMARY KEY`.
+* `user_id`, qui est l'identifiant de l'utilisateur propriétaire en `CHAR(36)`. Cette colonne possède la contrainte `FOREIGN KEY`, référençant la colonne `id` de la table `users`.
+* `account_id`, qui est l'identifiant du compte bancaire associé en `CHAR(36)`. Cette colonne possède la contrainte `FOREIGN KEY`, référençant la colonne `id` de la table `accounts`.
+* `amount`, qui est le montant de l'avance en `DECIMAL(15,2)`.
+* `description`, qui est une description optionnelle en `VARCHAR(255)`.
+* `person`, qui est le nom de la personne concernée (prêteur ou emprunteur) en `VARCHAR(100)`.
+* `date`, qui est la date de l'avance en `DATE`.
+* `due_date`, qui est la date d'échéance prévue pour le remboursement en `DATE`, ou `NULL` si aucune échéance n'est fixée.
+* `direction`, qui spécifie le sens de l'avance en tant qu'`ENUM` avec les valeurs : 'given' (j'ai prêté de l'argent, en attente de remboursement) ou 'received' (on m'a prêté, je dois rembourser).
+* `status`, qui spécifie l'état du remboursement en tant qu'`ENUM` avec les valeurs : 'pending' (aucun remboursement reçu), 'partial' (partiellement remboursé), 'paid' (entièrement remboursé).
+* `amount_received`, qui est le montant déjà remboursé en `DECIMAL(15,2)`, par défaut 0.
+* `transaction_id`, qui est l'identifiant de la transaction initiale générée automatiquement lors de la création de l'avance en `CHAR(36)`, ou `NULL`. Cette colonne possède la contrainte `FOREIGN KEY`, référençant la colonne `id` de la table `transactions`.
+
+La colonne `direction` permet de distinguer deux cas d'usage : le suivi des sommes prêtées à des tiers (à recevoir) et le suivi des sommes empruntées (à rembourser). Le statut est mis à jour automatiquement lors de l'enregistrement des remboursements partiels ou totaux.
+
 ### Relations
 
 Le diagramme entité-relation ci-dessous décrit les relations entre les entités de la base de données.
@@ -147,10 +166,12 @@ erDiagram
     USERS ||--o{ CATEGORIES : creates
     USERS ||--o{ RECURRING_TRANSACTIONS : defines
     USERS ||--o{ BUDGETS : defines
+    USERS ||--o{ ADVANCES : tracks
 
     ACCOUNTS ||--o{ TRANSACTIONS : contains
     ACCOUNTS ||--o{ TRANSACTIONS : receives
     ACCOUNTS ||--o{ RECURRING_TRANSACTIONS : linked_to
+    ACCOUNTS ||--o{ ADVANCES : linked_to
 
     CATEGORIES ||--o{ TRANSACTIONS : categorizes
     CATEGORIES ||--o{ RECURRING_TRANSACTIONS : categorizes
@@ -158,6 +179,8 @@ erDiagram
     CATEGORIES ||--o{ CATEGORIES : has_children
 
     RECURRING_TRANSACTIONS ||--o{ TRANSACTIONS : generates
+
+    TRANSACTIONS ||--o| ADVANCES : originates
 
     USERS {
         char_36 id PK
@@ -228,6 +251,21 @@ erDiagram
         decimal amount
         int display_order
     }
+
+    ADVANCES {
+        char_36 id PK
+        char_36 user_id FK
+        char_36 account_id FK
+        decimal amount
+        varchar description
+        varchar person
+        date date
+        date due_date
+        enum direction
+        enum status
+        decimal amount_received
+        char_36 transaction_id FK
+    }
 ```
 
 Comme détaillé par le diagramme :
@@ -239,8 +277,9 @@ Comme détaillé par le diagramme :
 * Une transaction récurrente peut générer 0 à plusieurs transactions réelles : 0 si la récurrence vient d'être créée, et plusieurs au fur et à mesure que les occurrences sont générées. Une transaction générée peut optionnellement référencer sa transaction récurrente source.
 * Un utilisateur peut définir 0 à plusieurs budgets. Un budget appartient à un et un seul utilisateur.
 * Une catégorie peut avoir 0 ou 1 budget associé par utilisateur. Un budget est toujours lié à une et une seule catégorie.
+* Un utilisateur peut créer 0 à plusieurs avances. Une avance appartient à un et un seul utilisateur et est liée à un compte bancaire. Une avance peut optionnellement référencer la transaction générée automatiquement lors de sa création.
 
-Les suppressions sont gérées en cascade : supprimer un utilisateur supprime automatiquement tous ses comptes, transactions et budgets via les contraintes `ON DELETE CASCADE`.
+Les suppressions sont gérées en cascade : supprimer un utilisateur supprime automatiquement tous ses comptes, transactions, budgets et avances via les contraintes `ON DELETE CASCADE`.
 
 ## Optimisations
 
@@ -257,6 +296,11 @@ Conformément aux requêtes typiques dans `queries.sql`, il est courant pour les
 * `recurring_transactions.is_active` : Accélère le filtrage des récurrences actives
 * `budgets.user_id` : Accélère la récupération de tous les budgets d'un utilisateur
 * `budgets.display_order` : Accélère le tri par ordre d'affichage sur le tableau de bord
+* `advances.user_id` : Accélère la récupération de toutes les avances d'un utilisateur
+* `advances.direction` : Accélère le filtrage par direction (prêts donnés ou reçus)
+* `advances.status` : Accélère le filtrage par statut de remboursement
+* `advances.person` : Accélère la recherche et le regroupement par personne
+* `advances.date` : Accélère le tri et le filtrage par date
 
 ## Limitations
 

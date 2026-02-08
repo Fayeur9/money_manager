@@ -11,10 +11,8 @@ import clsx from 'clsx'
  * @param {Function} props.onEdit - Callback édition
  * @param {Function} props.onDelete - Callback suppression
  * @param {Function} props.formatCurrency - Fonction de formatage monétaire
- * @param {boolean} props.isChild - Si c'est un sous-budget (affichage réduit)
  */
-function BudgetCard({ budget, onEdit, onDelete, formatCurrency, isChild = false }) {
-  const remainingPercent = Math.max(0, 100 - budget.percentage)
+function BudgetCard({ budget, onEdit, onDelete, formatCurrency }) {
   const isExceeded = budget.is_exceeded
   const isWarning = budget.percentage >= 80 && !isExceeded
 

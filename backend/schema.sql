@@ -353,8 +353,8 @@ BEGIN
     VALUES (v_cat_investissements, p_user_id, 'Investissements', 'income', '/default/icons/chart.png', '#14b8a6', TRUE);
     -- Sous-catégories Investissements
     INSERT INTO mm_categories (cat_id, cat_usr_id, cat_parent_id, cat_name, cat_type, cat_icon, cat_color, cat_is_default) VALUES
-        (UUID(), p_user_id, v_cat_investissements, 'Dividendes', 'income', '/default/icons/coins.png', '#14b8a6', TRUE),
-        (UUID(), p_user_id, v_cat_investissements, 'Plus-values', 'income', '/default/icons/trending-up.png', '#14b8a6', TRUE);
+        (UUID(), p_user_id, v_cat_investissements, 'Dividendes', 'income', '/default/icons/money.png', '#14b8a6', TRUE),
+        (UUID(), p_user_id, v_cat_investissements, 'Plus-values', 'income', '/default/icons/chart.png', '#14b8a6', TRUE);
 
     -- Remboursements (sans sous-catégories)
     INSERT INTO mm_categories (cat_id, cat_usr_id, cat_name, cat_type, cat_icon, cat_color, cat_is_default)
@@ -362,7 +362,7 @@ BEGIN
 
     -- Emprunts (quand quelqu'un me prête de l'argent - sans sous-catégories)
     INSERT INTO mm_categories (cat_id, cat_usr_id, cat_name, cat_type, cat_icon, cat_color, cat_is_default)
-    VALUES (UUID(), p_user_id, 'Emprunts', 'income', '/default/icons/money-receive.png', '#f97316', TRUE);
+    VALUES (UUID(), p_user_id, 'Emprunts', 'income', '/default/icons/wallet.png', '#f97316', TRUE);
 
     -- Cadeaux reçus (sans sous-catégories)
     INSERT INTO mm_categories (cat_id, cat_usr_id, cat_name, cat_type, cat_icon, cat_color, cat_is_default)

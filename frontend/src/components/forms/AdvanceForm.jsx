@@ -8,13 +8,6 @@ import DatePicker from '../ui/DatePicker'
 import StyledSelect from '../StyledSelect'
 import ConfirmModal from '../ui/ConfirmModal'
 
-// Options de statut
-const statusOptions = [
-	{ value: 'pending', label: 'En attente' },
-	{ value: 'partial', label: 'Partiellement remboursé' },
-	{ value: 'paid', label: 'Remboursé' }
-]
-
 /**
  * Formulaire d'avance.
  *
@@ -69,9 +62,6 @@ function AdvanceForm({
 	// Erreurs de validation
 	const [errors, setErrors] = useState({})
 
-	// Valeurs initiales pour détecter les modifications
-	const [initialFormValues, setInitialFormValues] = useState(null)
-
 	// Mode édition ou création
 	const isEditMode = !!initialData.id
 
@@ -87,19 +77,12 @@ function AdvanceForm({
 			due_date: initialData.due_date || ''
 		}
 		setForm(newForm)
-		setInitialFormValues(newForm)
 		setShowDeleteModal(false)
 		setShowPaymentForm(false)
 		setPaymentAmount('')
 		setErrors({})
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [initialData.id])
-
-	// Vérifier si le formulaire a été modifié
-	const isDirty = () => {
-		if (!initialFormValues) return false
-		return Object.keys(form).some(key => form[key] !== initialFormValues[key])
-	}
 
 	// Mettre à jour un champ
 	const updateField = (field, value) => {

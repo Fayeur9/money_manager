@@ -355,12 +355,18 @@ ORDER BY `b`.`bgt_parent_id` IS NOT NULL,
          CASE WHEN `b`.`bgt_display_order` IS NULL THEN 1 ELSE 0 END,
          `b`.`bgt_display_order` ASC, `b`.`created_at` ASC;
 
--- Calculer les depenses d'un budget (basees sur sa categorie uniquement)
+-- Calculer les depenses d'un budget (categorie + toutes ses sous-categories via CTE recursive)
+WITH RECURSIVE `category_tree` AS (
+    SELECT `cat_id` FROM `mm_categories` WHERE `cat_id` = 'uuid-categorie'
+    UNION ALL
+    SELECT `c`.`cat_id` FROM `mm_categories` `c`
+    INNER JOIN `category_tree` `ct` ON `c`.`cat_parent_id` = `ct`.`cat_id`
+)
 SELECT COALESCE(SUM(`t`.`trx_amount`), 0) AS `spent`
 FROM `mm_transactions` `t`
 JOIN `mm_accounts` `a` ON `t`.`trx_acc_id` = `a`.`acc_id`
 WHERE `a`.`acc_usr_id` = 'uuid-utilisateur'
-  AND `t`.`trx_cat_id` = 'uuid-categorie'
+  AND `t`.`trx_cat_id` IN (SELECT `cat_id` FROM `category_tree`)
   AND `t`.`trx_type` = 'expense'
   AND `t`.`trx_date` BETWEEN '2025-01-01' AND '2025-01-31';
 
@@ -516,3 +522,78 @@ WHERE `bgt_usr_id` = 'uuid-utilisateur';
 UPDATE `mm_budgets`
 SET `bgt_display_order` = 1
 WHERE `bgt_id` = 'uuid-budget' AND `bgt_usr_id` = 'uuid-utilisateur';
+
+-- =============================================================================
+-- AVANCES (PRETS ET EMPRUNTS)
+-- =============================================================================
+
+-- Trouver toutes les avances d'un utilisateur avec les details du compte
+SELECT `a`.`adv_id` AS `id`, `a`.`adv_usr_id` AS `user_id`, `a`.`adv_acc_id` AS `account_id`,
+       `a`.`adv_amount` AS `amount`, `a`.`adv_description` AS `description`,
+       `a`.`adv_person` AS `person`, `a`.`adv_date` AS `date`,
+       `a`.`adv_due_date` AS `due_date`, `a`.`adv_direction` AS `direction`,
+       `a`.`adv_status` AS `status`, `a`.`adv_amount_received` AS `amount_received`,
+       `a`.`adv_trx_id` AS `transaction_id`,
+       `acc`.`acc_name` AS `account_name`, `acc`.`acc_icon` AS `account_icon`
+FROM `mm_advances` `a`
+JOIN `mm_accounts` `acc` ON `a`.`adv_acc_id` = `acc`.`acc_id`
+WHERE `a`.`adv_usr_id` = 'uuid-utilisateur'
+ORDER BY `a`.`adv_date` DESC, `a`.`created_at` DESC;
+
+-- Trouver les avances filtrees par direction (prets donnes ou recus)
+SELECT `a`.`adv_id` AS `id`, `a`.`adv_amount` AS `amount`, `a`.`adv_person` AS `person`,
+       `a`.`adv_date` AS `date`, `a`.`adv_status` AS `status`,
+       `a`.`adv_amount_received` AS `amount_received`
+FROM `mm_advances` `a`
+WHERE `a`.`adv_usr_id` = 'uuid-utilisateur'
+  AND `a`.`adv_direction` = 'given'  -- 'given' = j'ai prete, 'received' = on m'a prete
+ORDER BY `a`.`adv_date` DESC;
+
+-- Creer une nouvelle avance (pret donne)
+INSERT INTO `mm_advances` (`adv_id`, `adv_usr_id`, `adv_acc_id`, `adv_amount`, `adv_description`,
+                            `adv_person`, `adv_date`, `adv_due_date`, `adv_direction`, `adv_trx_id`)
+VALUES (UUID(), 'uuid-utilisateur', 'uuid-compte', 50.00, 'Restaurant',
+        'Marie', '2025-01-15', '2025-02-15', 'given', 'uuid-transaction');
+
+-- Mettre a jour une avance (description, personne, echeance)
+UPDATE `mm_advances`
+SET `adv_description` = 'Nouvelle description', `adv_due_date` = '2025-03-01'
+WHERE `adv_id` = 'uuid-avance';
+
+-- Enregistrer un remboursement partiel et mettre a jour le statut automatiquement
+UPDATE `mm_advances`
+SET `adv_amount_received` = `adv_amount_received` + 25.00,
+    `adv_status` = CASE
+        WHEN `adv_amount_received` + 25.00 >= `adv_amount` THEN 'paid'
+        ELSE 'partial'
+    END
+WHERE `adv_id` = 'uuid-avance';
+
+-- Supprimer une avance
+DELETE FROM `mm_advances` WHERE `adv_id` = 'uuid-avance';
+
+-- Resume des avances par personne (pour le tableau de bord)
+SELECT
+    `adv_person` AS `person`,
+    COUNT(*) AS `count`,
+    SUM(`adv_amount`) AS `total_amount`,
+    SUM(`adv_amount_received`) AS `total_received`,
+    SUM(`adv_amount` - `adv_amount_received`) AS `total_pending`
+FROM `mm_advances`
+WHERE `adv_usr_id` = 'uuid-utilisateur'
+  AND `adv_status` != 'paid'
+  AND `adv_direction` = 'given'
+GROUP BY `adv_person`
+ORDER BY `total_pending` DESC;
+
+-- Totaux globaux des avances (statistiques)
+SELECT
+    COUNT(*) AS `total_advances`,
+    COALESCE(SUM(`adv_amount`), 0) AS `total_amount`,
+    COALESCE(SUM(`adv_amount_received`), 0) AS `total_received`,
+    COALESCE(SUM(`adv_amount` - `adv_amount_received`), 0) AS `total_pending`,
+    COUNT(CASE WHEN `adv_status` = 'pending' THEN 1 END) AS `count_pending`,
+    COUNT(CASE WHEN `adv_status` = 'partial' THEN 1 END) AS `count_partial`,
+    COUNT(CASE WHEN `adv_status` = 'paid' THEN 1 END) AS `count_paid`
+FROM `mm_advances`
+WHERE `adv_usr_id` = 'uuid-utilisateur';

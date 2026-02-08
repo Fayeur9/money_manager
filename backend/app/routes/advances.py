@@ -109,7 +109,7 @@ async def create_advance_categories(user_id: str):
             cat_id = str(uuid.uuid4())
             cursor.execute("""
                 INSERT INTO mm_categories (cat_id, cat_usr_id, cat_name, cat_type, cat_icon, cat_color, cat_is_default)
-                VALUES (%s, %s, 'Remboursements', 'income', '/default/icons/money-receive.png', '#22c55e', TRUE)
+                VALUES (%s, %s, 'Remboursements', 'income', '/default/icons/refresh.png', '#22c55e', TRUE)
             """, (cat_id, user_id))
             created.append('Remboursements')
 
@@ -123,7 +123,7 @@ async def create_advance_categories(user_id: str):
             cat_id = str(uuid.uuid4())
             cursor.execute("""
                 INSERT INTO mm_categories (cat_id, cat_usr_id, cat_name, cat_type, cat_icon, cat_color, cat_is_default)
-                VALUES (%s, %s, 'Emprunts', 'income', '/default/icons/money-receive.png', '#f97316', TRUE)
+                VALUES (%s, %s, 'Emprunts', 'income', '/default/icons/wallet.png', '#f97316', TRUE)
             """, (cat_id, user_id))
             created.append('Emprunts')
 
